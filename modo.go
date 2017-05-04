@@ -61,6 +61,11 @@ func NewMoDo(containerID string, series bool, privileged bool, outputCB OutputFu
 	}
 }
 
+// UseClient allows an already existing client to be used
+func (m *MoDo) UseClient(client *docker.Client) {
+	m.client = client
+}
+
 // Add adds a new command to execute.
 func (m *MoDo) Add(do ...*Do) {
 	m.tasks = append(m.tasks, do...)
@@ -151,9 +156,11 @@ func (m *MoDo) Do() ([]error, error) {
 	var err error
 	var errs []error
 
-	m.client, err = docker.NewClient(DockerSock)
-	if err != nil {
-		return nil, err
+	if m.client == nil {
+		m.client, err = docker.NewClient(DockerSock)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// ensure container is running
