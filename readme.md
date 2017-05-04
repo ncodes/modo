@@ -33,7 +33,7 @@ errs, err := m.Do()
 ```
 
 ### Full Documentation
-(https://godoc.org/github.com/ncodes/modo)[Documentation]
+See [Documentation](https://godoc.org/github.com/ncodes/modo)
 
 ### ToDo
 - Support parallel execution
