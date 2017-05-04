@@ -3,10 +3,45 @@ package modo
 import (
 	"testing"
 
+	docker "github.com/fsouza/go-dockerclient"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMoDo(t *testing.T) {
+
+	client, err := docker.NewClient(DockerSock)
+	if err != nil {
+		t.Fatalf("failed to create docker client: %s", err)
+	}
+
+	deleteContainer := func(id string) {
+		err := client.RemoveContainer(docker.RemoveContainerOptions{
+			ID:    id,
+			Force: true,
+		})
+		if err != nil {
+			t.Fatalf("failed to start container: %s", err)
+		}
+		return
+	}
+
+	container, err := client.CreateContainer(docker.CreateContainerOptions{
+		Name: "test",
+		Config: &docker.Config{
+			Image: "busybox",
+			Cmd:   []string{"sleep", "1h"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed to create container: %s", err)
+	}
+
+	err = client.StartContainer(container.ID, nil)
+	if err != nil {
+		deleteContainer(container.ID)
+		t.Fatalf("failed to start container: %s", err)
+	}
+
 	Convey("MoDo", t, func() {
 
 		Convey(".Add", func() {
@@ -40,7 +75,7 @@ func TestMoDo(t *testing.T) {
 					out = append(out, d...)
 				}
 
-				modo := NewMoDo("56e65af437ba7510596f96d4a29e3e43e90c895ce7ff2910f2ec550ed0999f2f", true, false, outputCb)
+				modo := NewMoDo(container.ID, true, false, outputCb)
 				t1 := &Do{Cmd: []string{"echo", "hello world"}, AbortSeriesOnFail: false}
 				modo.Add(t1)
 				errs, err := modo.Do()
@@ -56,7 +91,7 @@ func TestMoDo(t *testing.T) {
 					out = append(out, d...)
 				}
 
-				modo := NewMoDo("56e65af437ba7510596f96d4a29e3e43e90c895ce7ff2910f2ec550ed0999f2f", true, false, outputCb)
+				modo := NewMoDo(container.ID, true, false, outputCb)
 				t1 := &Do{Cmd: []string{"xyz", "hello world"}, AbortSeriesOnFail: false}
 				modo.Add(t1)
 				errs, err := modo.Do()
@@ -72,7 +107,7 @@ func TestMoDo(t *testing.T) {
 					out = append(out, d...)
 				}
 
-				modo := NewMoDo("56e65af437ba7510596f96d4a29e3e43e90c895ce7ff2910f2ec550ed0999f2f", true, false, outputCb)
+				modo := NewMoDo(container.ID, true, false, outputCb)
 				t1 := &Do{Cmd: []string{"echo", "hello"}, AbortSeriesOnFail: false}
 				t2 := &Do{Cmd: []string{"xyz", "hello world"}, AbortSeriesOnFail: true}
 				t3 := &Do{Cmd: []string{"printf", "friend"}, AbortSeriesOnFail: false}
@@ -94,7 +129,7 @@ func TestMoDo(t *testing.T) {
 					out = append(out, d...)
 				}
 
-				modo := NewMoDo("56e65af437ba7510596f96d4a29e3e43e90c895ce7ff2910f2ec550ed0999f2f", true, false, outputCb)
+				modo := NewMoDo(container.ID, true, false, outputCb)
 				t1 := &Do{Cmd: []string{"echo", "hello"}, AbortSeriesOnFail: false}
 				t2 := &Do{Cmd: []string{"xyz", "hello world"}, AbortSeriesOnFail: false}
 				t3 := &Do{Cmd: []string{"printf", "friend"}, AbortSeriesOnFail: false}
@@ -117,7 +152,7 @@ func TestMoDo(t *testing.T) {
 					out = append(out, d...)
 				}
 
-				modo := NewMoDo("56e65af437ba7510596f96d4a29e3e43e90c895ce7ff2910f2ec550ed0999f2f", true, false, outputCb)
+				modo := NewMoDo(container.ID, true, false, outputCb)
 				t1 := &Do{Cmd: []string{"printf", "hello"}, AbortSeriesOnFail: false, KeepOutput: true}
 				t2 := &Do{Cmd: []string{"xyz", "hello world"}, AbortSeriesOnFail: false, KeepOutput: true}
 				t3 := &Do{Cmd: []string{"printf", "friend"}, AbortSeriesOnFail: false, KeepOutput: true}
@@ -139,4 +174,6 @@ func TestMoDo(t *testing.T) {
 		})
 
 	})
+
+	deleteContainer(container.ID)
 }
