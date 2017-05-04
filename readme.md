@@ -1,4 +1,5 @@
 # MoDo - Simple Docker Command Executor
+[![GoDoc](https://godoc.org/github.com/ncodes/modo?status.svg)](https://godoc.org/github.com/ncodes/modo)
 
 MoDo provides the ability to run a series of commands in a docker container while also allowing flexible behaviours like attaching a simple function to collect logs, stopping the series of commands if one fails or continuing regardless of a command failing and the ability to enable privileged mode, collect full output and exit code per command.
 
@@ -32,3 +33,8 @@ errs, err := m.Do()
 ```
 
 ### Full Documentation
+(https://godoc.org/github.com/ncodes/modo)[Documentation]
+
+### ToDo
+- Support parallel execution
+- More tests
