@@ -7,10 +7,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func init() {
-	// BufferSize = 1
-}
-
 func TestOutputter(t *testing.T) {
 	Convey("Outputter", t, func() {
 		Convey("Should successfully read from writer and send to callback", func() {

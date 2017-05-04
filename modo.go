@@ -1,6 +1,7 @@
-// Package modo allows the ability to run commands in series or in parallel in a docker container
+// Package modo provides the ability to run a series of commands in a docker container
 // while also allowing flexible behaviours like attaching a simple function to collect logs,
-// stopping the series of commands if one fails or continuing and enabling privileged mode per command.
+// stopping the series of commands if one fails, continuing and enabling privileged mode per command
+// collecting the full output of each commands and exit code.
 package modo
 
 import (
@@ -20,6 +21,9 @@ var DockerSock = "unix:///var/run/docker.sock"
 // Setting `AbortSeriesOnFail` to true will force the execution of a series of Do task to be aborted
 // if the command fails. Set `Privileged` to run this command in privileged mode.
 // Attach an OutputCallback to receive stdout and stderr streams
+// If OutputCallback is not set, the MoDo.OutputCB will be used.
+// If KeepOutput is true, output will be store in the Output field.
+// Done and ExitCode will be set to true once command completes.
 type Do struct {
 	Cmd               []string
 	AbortSeriesOnFail bool
