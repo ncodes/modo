@@ -99,10 +99,10 @@ func (m *MoDo) GetTasks() []*Do {
 }
 
 func (m *MoDo) exec(task *Do) error {
-
 	exec, err := m.client.CreateExec(docker.CreateExecOptions{
 		Container:    m.containerID,
 		Cmd:          task.Cmd,
+		Tty:          true,
 		AttachStderr: !(m.outputCB == nil && task.OutputCB == nil),
 		AttachStdout: !(m.outputCB == nil && task.OutputCB == nil),
 		Privileged:   !(!m.privileged && !task.Privileged),
