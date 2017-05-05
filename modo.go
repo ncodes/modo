@@ -14,6 +14,20 @@ import (
 // OutputFunc represents a callback function to receive command output
 type OutputFunc func(d []byte, stdout bool)
 
+// State represents a lifecycle state of a command
+type State string
+
+var (
+	// Before indicates the point before a command is run
+	Before State = "before"
+
+	// Executing indicates a command that is running
+	Executing State = "executing"
+
+	// After indicates a command that has completed
+	After State = "after"
+)
+
 // DockerSock points to docker socket file
 var DockerSock = "unix:///var/run/docker.sock"
 
@@ -29,6 +43,7 @@ type Do struct {
 	AbortSeriesOnFail bool
 	Privileged        bool
 	OutputCB          OutputFunc
+	StateCB           func(state State, task *Do)
 	Output            []byte
 	KeepOutput        bool
 	ExitCode          int
@@ -44,6 +59,7 @@ type MoDo struct {
 	tasks       []*Do
 	client      *docker.Client
 	outputCB    OutputFunc
+	stateCB     func(state State, task *Do)
 	privileged  bool
 }
 
@@ -59,6 +75,12 @@ func NewMoDo(containerID string, series bool, privileged bool, outputCB OutputFu
 		outputCB:    outputCB,
 		privileged:  privileged,
 	}
+}
+
+// SetStateCB sets the life cycle state callback for the MoDo instance.
+// This callback will be called at every state of all commands.
+func (m *MoDo) SetStateCB(cb func(State, *Do)) {
+	m.stateCB = cb
 }
 
 // UseClient allows an already existing client to be used
@@ -120,11 +142,33 @@ func (m *MoDo) exec(task *Do) error {
 	go outOutputter.Start()
 	go errOutputter.Start()
 
+	if task.StateCB != nil {
+		task.StateCB(Before, task)
+	}
+	if m.stateCB != nil {
+		m.stateCB(Before, task)
+	}
+
+	isExecuting := true
+	// call StateCB 10 milliseconds in the future. We expect the
+	// command to be executing or have completed execution.
+	time.AfterFunc(10*time.Millisecond, func() {
+		if isExecuting {
+			if task.StateCB != nil {
+				task.StateCB(Executing, task)
+			}
+			if m.stateCB != nil {
+				m.stateCB(Executing, task)
+			}
+		}
+	})
+
 	err = m.client.StartExec(exec.ID, docker.StartExecOptions{
 		OutputStream: outOutputter.GetWriter(),
 		ErrorStream:  errOutputter.GetWriter(),
 	})
 
+	isExecuting = false
 	if err != nil {
 		outOutputter.Stop()
 		errOutputter.Stop()
@@ -144,6 +188,13 @@ func (m *MoDo) exec(task *Do) error {
 	}
 
 	task.ExitCode = execIns.ExitCode
+
+	if task.StateCB != nil {
+		task.StateCB(After, task)
+	}
+	if m.stateCB != nil {
+		m.stateCB(After, task)
+	}
 
 	return err
 }
