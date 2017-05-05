@@ -102,7 +102,6 @@ func (m *MoDo) exec(task *Do) error {
 	exec, err := m.client.CreateExec(docker.CreateExecOptions{
 		Container:    m.containerID,
 		Cmd:          task.Cmd,
-		Tty:          true,
 		AttachStderr: !(m.outputCB == nil && task.OutputCB == nil),
 		AttachStdout: !(m.outputCB == nil && task.OutputCB == nil),
 		Privileged:   !(!m.privileged && !task.Privileged),
@@ -163,12 +162,18 @@ func (m *MoDo) exec(task *Do) error {
 		}
 	})
 
-	err = m.client.StartExec(exec.ID, docker.StartExecOptions{
-		OutputStream: outOutputter.GetWriter(),
-		ErrorStream:  errOutputter.GetWriter(),
-	})
+	done := make(chan error)
+	go func() {
+		err := m.client.StartExec(exec.ID, docker.StartExecOptions{
+			OutputStream: outOutputter.GetWriter(),
+			ErrorStream:  errOutputter.GetWriter(),
+		})
+		done <- err
+	}()
 
+	err = <-done
 	isExecuting = false
+
 	if err != nil {
 		outOutputter.Stop()
 		errOutputter.Stop()
