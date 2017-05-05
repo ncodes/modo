@@ -164,10 +164,22 @@ func (m *MoDo) exec(task *Do) error {
 
 	done := make(chan error)
 	go func() {
-		err := m.client.StartExec(exec.ID, docker.StartExecOptions{
+		_, err := m.client.StartExecNonBlocking(exec.ID, docker.StartExecOptions{
 			OutputStream: outOutputter.GetWriter(),
 			ErrorStream:  errOutputter.GetWriter(),
 		})
+
+		var running = true
+		for running {
+			execStatus, err := m.client.InspectExec(exec.ID)
+			if err != nil {
+				done <- err
+				break
+			}
+			running = execStatus.Running
+			time.Sleep(100 * time.Millisecond)
+		}
+
 		done <- err
 	}()
 
