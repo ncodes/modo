@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	docker "github.com/ncodes/go-dockerclient"
+	docker "github.com/fsouza/go-dockerclient"
 )
 
 // OutputFunc represents a callback function to receive command output
