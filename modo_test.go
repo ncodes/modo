@@ -175,24 +175,24 @@ func TestMoDo(t *testing.T) {
 
 		Convey("Test State Callback", func() {
 
-			// Convey("Should receive all lifecycle state calls", func() {
-			// 	var receivedStates = []State{}
-			// 	t1 := &Do{
-			// 		Cmd:               []string{"sleep", "2"},
-			// 		AbortSeriesOnFail: false,
-			// 		KeepOutput:        true,
-			// 		StateCB: func(state State, task *Do) {
-			// 			receivedStates = append(receivedStates, state)
-			// 		},
-			// 	}
-			// 	modo := NewMoDo(container.ID, true, false, nil)
-			// 	modo.Add(t1)
-			// 	errs, err := modo.Do()
-			// 	So(len(errs), ShouldEqual, 0)
-			// 	So(err, ShouldBeNil)
-			// 	So(len(receivedStates), ShouldEqual, 3)
-			// 	So(receivedStates, ShouldResemble, []State{Before, Executing, After})
-			// })
+			Convey("Should receive all lifecycle state calls", func() {
+				var receivedStates = []State{}
+				t1 := &Do{
+					Cmd:               []string{"sleep", "2"},
+					AbortSeriesOnFail: false,
+					KeepOutput:        true,
+					StateCB: func(state State, task *Do) {
+						receivedStates = append(receivedStates, state)
+					},
+				}
+				modo := NewMoDo(container.ID, true, false, nil)
+				modo.Add(t1)
+				errs, err := modo.Do()
+				So(len(errs), ShouldEqual, 0)
+				So(err, ShouldBeNil)
+				So(len(receivedStates), ShouldEqual, 3)
+				So(receivedStates, ShouldResemble, []State{Before, Executing, After})
+			})
 
 			Convey("Should receive all lifecycle state calls in MoDo instance state callback", func() {
 				var receivedStates = []State{}
