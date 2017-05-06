@@ -148,43 +148,36 @@ func (m *MoDo) exec(task *Do) error {
 		m.stateCB(Before, task)
 	}
 
-	isExecuting := true
-	// call StateCB 10 milliseconds in the future. We expect the
-	// command to be executing or have completed execution.
-	time.AfterFunc(10*time.Millisecond, func() {
-		if isExecuting {
+	_, err = m.client.StartExecNonBlocking(exec.ID, docker.StartExecOptions{
+		OutputStream: outOutputter.GetWriter(),
+		ErrorStream:  errOutputter.GetWriter(),
+	})
+	if err != nil {
+		return err
+	}
+
+	// give some time for the execution to start before watching
+	time.Sleep(50 * time.Millisecond)
+
+	var executed = false
+	var running = true
+	for running {
+		execStatus, err := m.client.InspectExec(exec.ID)
+		if err != nil {
+			return err
+		}
+		running = execStatus.Running
+		if running && !executed {
 			if task.StateCB != nil {
 				task.StateCB(Executing, task)
 			}
 			if m.stateCB != nil {
 				m.stateCB(Executing, task)
 			}
+			executed = true
 		}
-	})
-
-	done := make(chan error)
-	go func() {
-		_, err := m.client.StartExecNonBlocking(exec.ID, docker.StartExecOptions{
-			OutputStream: outOutputter.GetWriter(),
-			ErrorStream:  errOutputter.GetWriter(),
-		})
-
-		var running = true
-		for running {
-			execStatus, err := m.client.InspectExec(exec.ID)
-			if err != nil {
-				done <- err
-				break
-			}
-			running = execStatus.Running
-			time.Sleep(100 * time.Millisecond)
-		}
-
-		done <- err
-	}()
-
-	err = <-done
-	isExecuting = false
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	if err != nil {
 		outOutputter.Stop()
