@@ -1,7 +1,6 @@
 package modo
 
 import (
-	"bytes"
 	"io"
 	"sync"
 )
@@ -22,7 +21,7 @@ type Outputter struct {
 // NewOutputter creates a new outputter
 func NewOutputter(cb func([]byte)) *Outputter {
 	return &Outputter{
-		writer: bytes.NewBuffer(nil),
+		writer: NewSafeBuffer(),
 		cb:     cb,
 		m:      sync.Mutex{},
 	}
@@ -42,7 +41,7 @@ func (o *Outputter) Stop() {
 // Start continuously reads the writer and sends the data to the output callback
 func (o *Outputter) Start() error {
 	tmp := make([]byte, BufferSize)
-	buf := o.writer.(*bytes.Buffer)
+	buf := o.writer.(*SafeBuffer)
 	for o.stopRead == false {
 		if buf.Len() == 0 {
 			continue
