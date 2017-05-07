@@ -18,6 +18,10 @@ type OutputFunc func(d []byte, stdout bool)
 type State string
 
 var (
+
+	// Begin indicates the start of the execution of all commands
+	Begin State = "begin"
+
 	// Before indicates the point before a command is run
 	Before State = "before"
 
@@ -26,6 +30,9 @@ var (
 
 	// After indicates a command that has completed
 	After State = "after"
+
+	// End indicates the end of execution of all commands
+	End State = "end"
 )
 
 // DockerSock points to docker socket file
@@ -230,6 +237,10 @@ func (m *MoDo) Do() ([]error, error) {
 		return nil, err
 	}
 
+	if m.outputCB != nil {
+		m.stateCB(Begin, nil)
+	}
+
 	for i, task := range m.tasks {
 		if m.series {
 			err = m.exec(task)
@@ -246,6 +257,10 @@ func (m *MoDo) Do() ([]error, error) {
 				errs = append(errs, fmt.Errorf("task: %d exited with exit code: %d", i, task.ExitCode))
 			}
 		}
+	}
+
+	if m.outputCB != nil {
+		m.stateCB(End, nil)
 	}
 
 	return errs, nil
