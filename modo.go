@@ -237,7 +237,7 @@ func (m *MoDo) Do() ([]error, error) {
 		return nil, err
 	}
 
-	if m.outputCB != nil {
+	if m.stateCB != nil {
 		m.stateCB(Begin, nil)
 	}
 
@@ -259,7 +259,7 @@ func (m *MoDo) Do() ([]error, error) {
 		}
 	}
 
-	if m.outputCB != nil {
+	if m.stateCB != nil {
 		m.stateCB(End, nil)
 	}
 
