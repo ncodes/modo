@@ -209,8 +209,8 @@ func TestMoDo(t *testing.T) {
 				errs, err := modo.Do()
 				So(len(errs), ShouldEqual, 0)
 				So(err, ShouldBeNil)
-				So(len(receivedStates), ShouldEqual, 3)
-				So(receivedStates, ShouldResemble, []State{Before, Executing, After})
+				So(len(receivedStates), ShouldEqual, 5)
+				So(receivedStates, ShouldResemble, []State{Begin, Before, Executing, After, End})
 			})
 		})
 
